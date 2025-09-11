@@ -5,6 +5,7 @@ from detectron2.solver import WarmupParamScheduler
 from fvcore.common.param_scheduler import MultiStepParamScheduler, CosineParamScheduler
 from PIL import Image
 
+import torch
 from ..common.data.coco import dataloader
 from ..common.models.mask_rcnn_fpn import model
 from ..common.optim import AdamW as optimizer
@@ -24,14 +25,19 @@ model.backbone.bottom_up.freeze_at = 0
 # fmt: off
 model.backbone.bottom_up.stem.norm = \
     model.backbone.bottom_up.stages.norm = \
-    model.backbone.norm = "SyncBN"
+    model.backbone.norm = "BN"
+    # model.backbone.norm = "SyncBN" \
+
 
 # Using NaiveSyncBatchNorm becase heads may have empty input. That is not supported by
 # torch.nn.SyncBatchNorm. We can remove this after
 # https://github.com/pytorch/pytorch/issues/36530 is fixed.
+# model.roi_heads.box_head.conv_norm = \
+#     model.roi_heads.mask_head.conv_norm = lambda c: torch.nn.SyncBatchNorm(c,
+#                                                                        stats_mode="N")
 model.roi_heads.box_head.conv_norm = \
-    model.roi_heads.mask_head.conv_norm = lambda c: NaiveSyncBatchNorm(c,
-                                                                       stats_mode="N")
+    model.roi_heads.mask_head.conv_norm = lambda c: torch.nn.BatchNorm2d(c)
+#                                                                       stats_mode="N")
 # fmt: on
 
 # 2conv in RPN:

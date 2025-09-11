@@ -13,6 +13,9 @@ To add more complicated training logic, you can easily add other configs
 in the config file and implement a new train_net.py to handle them.
 """
 import logging
+import wandb
+
+import detectron2
 
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import LazyConfig, instantiate
@@ -28,11 +31,22 @@ from detectron2.engine import (
 from detectron2.engine.defaults import create_ddp_model
 from detectron2.evaluation import inference_on_dataset, print_csv_format
 from detectron2.utils import comm
+from detectron2.utils.events import EventWriter
 import os
 import random 
-
 logger = logging.getLogger("detectron2")
 
+
+
+run = wandb.init(
+    entity="universiteitleiden",
+    project="master-thesis-dragonfly",
+    tags=["Mask-R-CNN", "annotated-images", "4-part-annotated" ],
+    config={
+        "architecture": "Mask-R-CNN",
+    },
+    sync_tensorboard=True
+)
 
 def do_test(cfg, model):
     if "evaluator" in cfg.dataloader:
@@ -65,6 +79,7 @@ def do_train(args, cfg):
                 ddp (dict)
     """
     model = instantiate(cfg.model)
+    DetectionCheckpointer(model).load("/home/mrajaraman/Code/model_checkpoints/model_final_mask_rcnn.pth")
     logger = logging.getLogger("detectron2")
     logger.info("Model:\n{}".format(model))
     model.to(cfg.train.device)
@@ -113,30 +128,73 @@ def do_train(args, cfg):
 
 from detectron2.data.datasets import register_coco_instances
 
+# def register_custom_coco_dataset(args) -> None:
+#    dataset_path = args.dataset_path
+#    exp_id = args.exp_id
+#    annotations_path = os.path.join(dataset_path, "annotations/")
+#    register_coco_instances(
+#        f"dragonfly_{exp_id}_train",
+#        {},
+#        os.path.join(annotations_path, "instances_train.json"),
+#        os.path.join(dataset_path, "train"),
+#    )
+#    if args.eval_only:
+#     register_coco_instances(
+#         f"dragonfly_{exp_id}_test",
+#         {},
+#        os.path.join(annotations_path, "instances_test.json"),
+#        os.path.join(dataset_path, "test"), ## NOTE: we generally do not want to test on the tiled test set
+#     )
+#    else: 
+#     register_coco_instances(
+#         f"dragonfly_{exp_id}_valid",
+#         {},
+#         os.path.join(annotations_path, "instances_val.json"),
+#         os.path.join(dataset_path, "val"),
+#     )
+
 def register_custom_coco_dataset(args) -> None:
    dataset_path = args.dataset_path
    exp_id = args.exp_id
    annotations_path = os.path.join(dataset_path, "annotations/")
    register_coco_instances(
-       f"lifeplan_{exp_id}_train",
+       f"dragonfly_{exp_id}_train",
        {},
-       os.path.join(annotations_path, "instances_train2017.json"),
-       os.path.join(dataset_path, "train2017"),
+       os.path.join(annotations_path, "instances_train.json"),
+       os.path.join(dataset_path, "train"),
    )
-   if args.eval_only:
-    register_coco_instances(
-        f"lifeplan_{exp_id}_test",
+   register_coco_instances(
+        f"dragonfly_{exp_id}_test",
         {},
-       os.path.join(annotations_path, "instances_test2017.json"),
-       os.path.join(dataset_path, "test2017"), ## NOTE: we generally do not want to test on the tiled test set
+       os.path.join(annotations_path, "instances_test.json"),
+       os.path.join(dataset_path, "test"), ## NOTE: we generally do not want to test on the tiled test set
     )
-   else: 
-    register_coco_instances(
-        f"lifeplan_{exp_id}_valid",
+   register_coco_instances(
+        f"dragonfly_{exp_id}_valid",
         {},
-        os.path.join(annotations_path, "instances_val2017.json"),
-        os.path.join(dataset_path, "val2017"),
+        os.path.join(annotations_path, "instances_val.json"),
+        os.path.join(dataset_path, "val"),
     )
+
+# def register_custom_coco_dataset(args) -> None:
+#     dataset_path = args.dataset_path
+#     exp_id = args.exp_id
+#     annotations_path = os.path.join(dataset_path, "annotations")
+
+#     # Define dataset splits
+#     splits = {
+#         "train": "instances_train.json",
+#         "test": "instances_test.json",
+#         "val": "instances_val.json",
+#     }
+
+#     for split, ann_file in splits.items():
+#         dataset_name = f"dragonfly_{exp_id}_{split}"
+#         json_file = os.path.join(annotations_path, ann_file)
+#         image_root = os.path.join(dataset_path, split)
+
+#         register_coco_instances(dataset_name, {}, json_file, image_root)
+#         print(f"Registered Dragonfly {split} dataset as '{dataset_name}'")
 
 def main(args):
     register_custom_coco_dataset(args) # REGISTER CUSTOM COCO DATA -> disable during inference
@@ -154,16 +212,16 @@ def main(args):
         do_train(args, cfg)
 
 
-<<<<<<< HEAD
+# <<<<<<< HEAD
 def invoke_main() -> None:
     args = default_argument_parser().parse_args()
-=======
+# =======
 if __name__ == "__main__":
     parser = default_argument_parser()
     parser.add_argument(
         '--dataset_path', 
         type=str, 
-        default="/h/jquinto/Mask-RCNN/datasets/lifeplan/",
+        default="/home/mrajaraman/dataset/coco/",
         help="Path to the dataset directory containing annotations and images"
     )
     parser.add_argument(
@@ -177,7 +235,7 @@ if __name__ == "__main__":
     args.dist_url = 'tcp://127.0.0.1:' + str(port)
     print("Command Line Args:", args)
     print("pwd:", os.getcwd())
->>>>>>> local_dev_mask_rcnn/massid45
+# >>>>>>> local_dev_mask_rcnn/massid45
     launch(
         main,
         args.num_gpus,
@@ -186,7 +244,3 @@ if __name__ == "__main__":
         dist_url=args.dist_url,
         args=(args,),
     )
-
-
-if __name__ == "__main__":
-    invoke_main()  # pragma: no cover

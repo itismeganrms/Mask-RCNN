@@ -1,0 +1,108 @@
+_wandb:
+    value:
+        cli_version: 0.21.3
+        e:
+            8xjv0m380plbexrle2vt0gqkra32l4cm:
+                args:
+                    - --num-gpus
+                    - "2"
+                    - --resume
+                    - --config-file
+                    - /home/mrajaraman/master-thesis-dragonfly/mask-rcnn/Mask-RCNN-MassID45/configs/new_baselines/mask_rcnn_R_50_FPN_100ep_LSJ.py
+                    - --exp_id
+                    - "512"
+                    - --dataset_path
+                    - /home/mrajaraman/dataset/coco/
+                    - train.output_dir=output_512_sahi_tiled_v9_scratch
+                    - train.init_checkpoint=detectron2://ImageNetPretrained/torchvision/R-50.pkl
+                    - dataloader.train.dataset.names=dragonfly_512_train
+                    - dataloader.test.dataset.names=dragonfly_512_test
+                cpu_count: 64
+                cpu_count_logical: 64
+                cudaVersion: "12.6"
+                disk:
+                    /:
+                        total: "52521500672"
+                        used: "8760975360"
+                email: mrnalini@live.in
+                executable: /home/mrajaraman/conda/mask_rcnn/bin/python
+                git:
+                    commit: 2d140ac385db07473682749d282a28d690cfb4a3
+                    remote: https://github.com/itismeganrms/master-thesis-dragonfly.git
+                gpu: NVIDIA A100 80GB PCIe
+                gpu_count: 2
+                gpu_nvidia:
+                    - architecture: Ampere
+                      memoryTotal: "85899345920"
+                      name: NVIDIA A100 80GB PCIe
+                      uuid: GPU-1938d2af-52d9-9b4b-1421-04fe1e8c7de4
+                    - architecture: Ampere
+                      memoryTotal: "85899345920"
+                      name: NVIDIA A100 80GB PCIe
+                      uuid: GPU-bb8def76-7da8-dae5-8d04-4eae55eebd32
+                host: node870
+                memory:
+                    total: "270301921280"
+                os: Linux-5.14.0-427.33.1.el9_4.x86_64-x86_64-with-glibc2.17
+                program: <python with no main file>
+                python: CPython 3.8.20
+                root: /zfsstore/user/mrajaraman/master-thesis-dragonfly/mask-rcnn/Mask-RCNN-MassID45
+                slurm:
+                    cluster_name: alice
+                    conf: /cm/shared/apps/slurm/var/etc/alice/slurm.conf
+                    cpus_on_node: "1"
+                    gpus_on_node: "2"
+                    gtids: "0"
+                    job_account: biodiversityhotspots
+                    job_cpus_per_node: "1"
+                    job_end_time: "1757357847"
+                    job_gid: "1442"
+                    job_gpus: 0,3
+                    job_id: "4702486"
+                    job_name: maskrcnn
+                    job_nodelist: node870
+                    job_num_nodes: "1"
+                    job_partition: gpu-medium
+                    job_qos: normal
+                    job_start_time: "1757329047"
+                    job_uid: "2744"
+                    job_user: mrajaraman
+                    jobid: "4702486"
+                    localid: "0"
+                    mem_per_cpu: "4000"
+                    nnodes: "1"
+                    node_aliases: (null)
+                    nodeid: "0"
+                    nodelist: node870
+                    prio_process: "0"
+                    procid: "0"
+                    script_context: prolog_task
+                    submit_dir: /zfsstore/user/mrajaraman/master-thesis-dragonfly/mask-rcnn/Mask-RCNN-MassID45
+                    submit_host: nodelogin01
+                    task_pid: "3521436"
+                    tasks_per_node: "1"
+                    topology_addr: node870
+                    topology_addr_pattern: node
+                    working_cluster: alice:mgmt2:6817:9984:109
+                startedAt: "2025-09-08T10:57:38.730783Z"
+                writerId: 8xjv0m380plbexrle2vt0gqkra32l4cm
+        m: []
+        python_version: 3.8.20
+        t:
+            "1":
+                - 1
+                - 41
+                - 43
+            "2":
+                - 1
+                - 41
+                - 43
+            "3":
+                - 15
+                - 16
+            "4": 3.8.20
+            "5": 0.21.3
+            "12": 0.21.3
+            "13": linux-x86_64
+architecture:
+    value: Mask-R-CNN
