@@ -11,10 +11,7 @@ from ..common.models.mask_rcnn_fpn import model
 from ..common.optim import AdamW as optimizer
 from ..common.train import train
 
-# train from scratch
-# train.init_checkpoint = "/h/jquinto/Mask-RCNN/model_final_f96b26.pkl" # R101
-# train.init_checkpoint = "/h/jquinto/Mask-RCNN/model_final_f1362d.pkl" # RegNetX
-train.init_checkpoint = "/h/jquinto/Mask-RCNN/model_final_14d201.pkl" # R50 model
+# train.init_checkpoint = "/h/jquinto/Mask-RCNN/model_final_14d201.pkl" # R50 model
 train.amp.enabled = True
 train.ddp.fp16_compression = True
 train.checkpointer=dict(period=4885, max_to_keep=100)  # options for PeriodicCheckpointer
@@ -25,48 +22,35 @@ model.backbone.bottom_up.freeze_at = 0
 # fmt: off
 model.backbone.bottom_up.stem.norm = \
     model.backbone.bottom_up.stages.norm = \
-    model.backbone.norm = "BN"
-    # model.backbone.norm = "SyncBN" \
+    model.backbone.norm = "SyncBN" \
+    # model.backbone.norm = "BN"
 
 
-# Using NaiveSyncBatchNorm becase heads may have empty input. That is not supported by
-# torch.nn.SyncBatchNorm. We can remove this after
-# https://github.com/pytorch/pytorch/issues/36530 is fixed.
-# model.roi_heads.box_head.conv_norm = \
-#     model.roi_heads.mask_head.conv_norm = lambda c: torch.nn.SyncBatchNorm(c,
-#                                                                        stats_mode="N")
 model.roi_heads.box_head.conv_norm = \
     model.roi_heads.mask_head.conv_norm = lambda c: torch.nn.BatchNorm2d(c)
-#                                                                       stats_mode="N")
-# fmt: on
 
-# 2conv in RPN:
-# https://github.com/tensorflow/tpu/blob/b24729de804fdb751b06467d3dce0637fa652060/models/official/detection/modeling/architecture/heads.py#L95-L97  # noqa: E501, B950
 model.proposal_generator.head.conv_dims = [-1, -1]
 
 # 4conv1fc box head
 model.roi_heads.box_head.conv_dims = [256, 256, 256, 256]
 model.roi_heads.box_head.fc_dims = [1024]
 
-# resize_and_crop_image in:
-# https://github.com/tensorflow/tpu/blob/b24729de804fdb751b06467d3dce0637fa652060/models/official/detection/utils/input_utils.py#L127  # noqa: E501, B950
-image_size = 1024
 dataloader.train.mapper.augmentations = [
     L(T.RandomFlip)(horizontal=True),
     L(T.RandomRotation)(angle=[0, 90, 180, 270], sample_style = 'choice'),
     L(T.RandomBrightness)(intensity_min=0.85, intensity_max=1.15),
     L(T.RandomContrast)(intensity_min=0.9, intensity_max=1.1),
     L(T.RandomSaturation)(intensity_min=0.85, intensity_max=1.15),
-    L(T.ResizeShortestEdge)(short_edge_length=(image_size, image_size), max_size = image_size, sample_style = 'choice', interp=Image.BILINEAR),
+    #L(T.ResizeShortestEdge)(short_edge_length=(image_size, image_size), max_size = image_size, sample_style = 'choice', interp=Image.BILINEAR),
 ]
 
 # recompute boxes due to cropping
 dataloader.train.mapper.recompute_boxes = True
 
 # larger batch-size.
-dataloader.train.total_batch_size = 8
+dataloader.train.total_batch_size = 2
 
-train.max_iter = 15000
+train.max_iter = 5000
 
 def cosine_lr_scheduler(
     start_value,

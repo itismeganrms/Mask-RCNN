@@ -1,20 +1,5 @@
-#!/usr/bin/env python
-# Copyright (c) Facebook, Inc. and its affiliates.
-"""
-Training script using the new "LazyConfig" python config files.
-
-This scripts reads a given python config file and runs the training or evaluation.
-It can be used to train any models or dataset as long as they can be
-instantiated by the recursive construction defined in the given config file.
-
-Besides lazy construction of models, dataloader, etc., this scripts expects a
-few common configuration parameters currently defined in "configs/common/train.py".
-To add more complicated training logic, you can easily add other configs
-in the config file and implement a new train_net.py to handle them.
-"""
 import logging
 import wandb
-
 import detectron2
 
 from detectron2.checkpoint import DetectionCheckpointer
@@ -32,11 +17,10 @@ from detectron2.engine.defaults import create_ddp_model
 from detectron2.evaluation import inference_on_dataset, print_csv_format
 from detectron2.utils import comm
 from detectron2.utils.events import EventWriter
+
 import os
 import random 
 logger = logging.getLogger("detectron2")
-
-
 
 run = wandb.init(
     entity="universiteitleiden",
@@ -58,26 +42,7 @@ def do_test(cfg, model):
         print_csv_format(ret)
         return ret
 
-
 def do_train(args, cfg):
-    """
-    Args:
-        cfg: an object with the following attributes:
-            model: instantiate to a module
-            dataloader.{train,test}: instantiate to dataloaders
-            dataloader.evaluator: instantiate to evaluator for test set
-            optimizer: instantaite to an optimizer
-            lr_multiplier: instantiate to a fvcore scheduler
-            train: other misc config defined in `configs/common/train.py`, including:
-                output_dir (str)
-                init_checkpoint (str)
-                amp.enabled (bool)
-                max_iter (int)
-                eval_period, log_period (int)
-                device (str)
-                checkpointer (dict)
-                ddp (dict)
-    """
     model = instantiate(cfg.model)
     DetectionCheckpointer(model).load("/home/mrajaraman/Code/model_checkpoints/model_final_mask_rcnn.pth")
     logger = logging.getLogger("detectron2")
@@ -119,39 +84,12 @@ def do_train(args, cfg):
 
     checkpointer.resume_or_load(cfg.train.init_checkpoint, resume=args.resume)
     if args.resume and checkpointer.has_checkpoint():
-        # The checkpoint stores the training iteration that just finished, thus we start
-        # at the next iteration
         start_iter = trainer.iter + 1
     else:
         start_iter = 0
     trainer.train(start_iter, cfg.train.max_iter)
 
 from detectron2.data.datasets import register_coco_instances
-
-# def register_custom_coco_dataset(args) -> None:
-#    dataset_path = args.dataset_path
-#    exp_id = args.exp_id
-#    annotations_path = os.path.join(dataset_path, "annotations/")
-#    register_coco_instances(
-#        f"dragonfly_{exp_id}_train",
-#        {},
-#        os.path.join(annotations_path, "instances_train.json"),
-#        os.path.join(dataset_path, "train"),
-#    )
-#    if args.eval_only:
-#     register_coco_instances(
-#         f"dragonfly_{exp_id}_test",
-#         {},
-#        os.path.join(annotations_path, "instances_test.json"),
-#        os.path.join(dataset_path, "test"), ## NOTE: we generally do not want to test on the tiled test set
-#     )
-#    else: 
-#     register_coco_instances(
-#         f"dragonfly_{exp_id}_valid",
-#         {},
-#         os.path.join(annotations_path, "instances_val.json"),
-#         os.path.join(dataset_path, "val"),
-#     )
 
 def register_custom_coco_dataset(args) -> None:
    dataset_path = args.dataset_path
@@ -163,38 +101,20 @@ def register_custom_coco_dataset(args) -> None:
        os.path.join(annotations_path, "instances_train.json"),
        os.path.join(dataset_path, "train"),
    )
-   register_coco_instances(
+   if args.eval_only:
+    register_coco_instances(
         f"dragonfly_{exp_id}_test",
         {},
        os.path.join(annotations_path, "instances_test.json"),
        os.path.join(dataset_path, "test"), ## NOTE: we generally do not want to test on the tiled test set
     )
-   register_coco_instances(
+   else: 
+    register_coco_instances(
         f"dragonfly_{exp_id}_valid",
         {},
         os.path.join(annotations_path, "instances_val.json"),
-        os.path.join(dataset_path, "val"),
+        os.path.join(dataset_path, "valid"),
     )
-
-# def register_custom_coco_dataset(args) -> None:
-#     dataset_path = args.dataset_path
-#     exp_id = args.exp_id
-#     annotations_path = os.path.join(dataset_path, "annotations")
-
-#     # Define dataset splits
-#     splits = {
-#         "train": "instances_train.json",
-#         "test": "instances_test.json",
-#         "val": "instances_val.json",
-#     }
-
-#     for split, ann_file in splits.items():
-#         dataset_name = f"dragonfly_{exp_id}_{split}"
-#         json_file = os.path.join(annotations_path, ann_file)
-#         image_root = os.path.join(dataset_path, split)
-
-#         register_coco_instances(dataset_name, {}, json_file, image_root)
-#         print(f"Registered Dragonfly {split} dataset as '{dataset_name}'")
 
 def main(args):
     register_custom_coco_dataset(args) # REGISTER CUSTOM COCO DATA -> disable during inference
@@ -221,7 +141,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--dataset_path', 
         type=str, 
-        default="/home/mrajaraman/dataset/coco/",
+        default="/home/mrajaraman/dataset/coco-roboflow/",
         help="Path to the dataset directory containing annotations and images"
     )
     parser.add_argument(
@@ -244,3 +164,6 @@ if __name__ == "__main__":
         dist_url=args.dist_url,
         args=(args,),
     )
+
+if __name__ == "__main__":
+    invoke_main()  # pragma: no cover
