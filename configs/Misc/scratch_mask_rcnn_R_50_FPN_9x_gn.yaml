@@ -9,7 +9,7 @@ MODEL:
     FREEZE_AT: 0
 SOLVER:
   # 9x schedule
-  IMS_PER_BATCH: 64  # 4x the standard
+  IMS_PER_BATCH: 2 #64  # 4x the standard
   STEPS: (187500, 197500)  # last 60/4==15k and last 20/4==5k
   MAX_ITER: 202500   # 90k * 9 / 4
   BASE_LR: 0.08

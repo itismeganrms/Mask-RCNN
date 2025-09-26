@@ -44,14 +44,13 @@ def do_test(cfg, model):
 
 def do_train(args, cfg):
     model = instantiate(cfg.model)
-    DetectionCheckpointer(model).load("/home/mrajaraman/Code/model_checkpoints/model_final_mask_rcnn.pth")
     logger = logging.getLogger("detectron2")
     logger.info("Model:\n{}".format(model))
     model.to(cfg.train.device)
 
     cfg.optimizer.params.model = model
     optim = instantiate(cfg.optimizer)
-
+    cfg.train.max_iter = args.train_iter  
     train_loader = instantiate(cfg.dataloader.train)
 
     model = create_ddp_model(model, **cfg.train.ddp)
@@ -61,6 +60,9 @@ def do_train(args, cfg):
         cfg.train.output_dir,
         trainer=trainer,
     )
+    num_ckpts = 10
+    period_steps = max(1, cfg.train.max_iter // num_ckpts)
+    cfg.train.checkpointer=dict(period=period_steps, max_to_keep=10) 
     trainer.register_hooks(
         [
             hooks.IterationTimer(),
@@ -132,30 +134,19 @@ def main(args):
         do_train(args, cfg)
 
 
-# <<<<<<< HEAD
 def invoke_main() -> None:
     args = default_argument_parser().parse_args()
-# =======
+
 if __name__ == "__main__":
     parser = default_argument_parser()
-    parser.add_argument(
-        '--dataset_path', 
-        type=str, 
-        default="/home/mrajaraman/dataset/coco-roboflow/",
-        help="Path to the dataset directory containing annotations and images"
-    )
-    parser.add_argument(
-        '--exp_id', 
-        # type=int, 
-        # default=256,
-        help="Identifier string -- tile size for training model if no SR is applied, or SR method if SR is applied; must be updated in argument cfg.DATASETS.TRAIN as well"
-    )
+    parser.add_argument('--dataset_path', type=str, default="/home/mrajaraman/dataset/coco-roboflow/", help="Path to the dataset directory containing annotations and images")
+    parser.add_argument('--exp_id', type=int, default=256, help="Identifier string -- tile size for training models")
+    parser.add_argument('--train_iter', type=int, default=2000, help="Number of iterations to train for")
     args = parser.parse_args()
     port = random.randint(1000, 20000)
     args.dist_url = 'tcp://127.0.0.1:' + str(port)
     print("Command Line Args:", args)
     print("pwd:", os.getcwd())
-# >>>>>>> local_dev_mask_rcnn/massid45
     launch(
         main,
         args.num_gpus,
@@ -165,5 +156,5 @@ if __name__ == "__main__":
         args=(args,),
     )
 
-if __name__ == "__main__":
-    invoke_main()  # pragma: no cover
+# if __name__ == "__main__":
+#     invoke_main() 

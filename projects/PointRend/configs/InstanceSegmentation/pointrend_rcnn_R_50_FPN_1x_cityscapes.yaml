@@ -12,7 +12,7 @@ DATASETS:
   TRAIN: ("cityscapes_fine_instance_seg_train",)
 SOLVER:
   BASE_LR: 0.01
-  IMS_PER_BATCH: 8
+  IMS_PER_BATCH: 2 #8
   MAX_ITER: 24000
   STEPS: (18000,)
 INPUT:

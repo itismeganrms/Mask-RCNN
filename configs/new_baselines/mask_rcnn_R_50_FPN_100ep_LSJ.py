@@ -14,6 +14,7 @@ from ..common.train import train
 # train.init_checkpoint = "/h/jquinto/Mask-RCNN/model_final_14d201.pkl" # R50 model
 train.amp.enabled = True
 train.ddp.fp16_compression = True
+
 train.checkpointer=dict(period=4885, max_to_keep=100)  # options for PeriodicCheckpointer
 train.eval_period=100000
 model.backbone.bottom_up.freeze_at = 0
@@ -22,8 +23,9 @@ model.backbone.bottom_up.freeze_at = 0
 # fmt: off
 model.backbone.bottom_up.stem.norm = \
     model.backbone.bottom_up.stages.norm = \
-    model.backbone.norm = "SyncBN" \
-    # model.backbone.norm = "BN"
+    model.backbone.norm = "BN"
+    # model.backbone.norm = "SyncBN" 
+
 
 
 model.roi_heads.box_head.conv_norm = \
@@ -48,9 +50,9 @@ dataloader.train.mapper.augmentations = [
 dataloader.train.mapper.recompute_boxes = True
 
 # larger batch-size.
-dataloader.train.total_batch_size = 2
+dataloader.train.total_batch_size = 1
 
-train.max_iter = 5000
+train.max_iter = 2000
 
 def cosine_lr_scheduler(
     start_value,

@@ -15,7 +15,7 @@ from PIL import Image
 dataloader = OmegaConf.create()
 
 dataloader.train = L(build_detection_train_loader)(
-    dataset=L(get_detection_dataset_dicts)(names="lifeplan_train", filter_empty=False), # CHANGE FOR LIFEPLAN
+    dataset=L(get_detection_dataset_dicts)(names="dragonfly_512_train", filter_empty=False), # CHANGE FOR LIFEPLAN
     mapper=L(DatasetMapper)(
         is_train=True,
         augmentations=[
@@ -34,7 +34,7 @@ dataloader.train = L(build_detection_train_loader)(
 )
 
 dataloader.test = L(build_detection_test_loader)(
-    dataset=L(get_detection_dataset_dicts)(names="lifeplan_valid", filter_empty=False), # CHANGE FOR LIFEPLAN
+    dataset=L(get_detection_dataset_dicts)(names="dragonfly_512_valid", filter_empty=False), # CHANGE FOR LIFEPLAN
     mapper=L(DatasetMapper)(
         is_train=False,
         augmentations=[

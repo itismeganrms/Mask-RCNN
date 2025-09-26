@@ -4,8 +4,6 @@ from typing import List, Optional
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
-from PIL import Image
 
 from sahi.models.base import DetectionModel
 from sahi.prediction import ObjectPrediction
@@ -18,6 +16,7 @@ from detectron2.data import MetadataCatalog
 from detectron2.engine.defaults import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog
+from detectron2.utils.visualizer import Visualizer
 from detectron2.projects.deeplab import add_deeplab_config
 import cv2
 from detectron2.config import LazyConfig, instantiate
@@ -43,16 +42,38 @@ cfg.train.device = "cuda"
 
 # init predictor
 model = instantiate(cfg.model)
-DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask2former-dragonfly/output_lifeplan_b_512_sahi_tiled_v9_R50_1024_one_cycle_lr_5e-5_colour_augs_15k_iters/model_final.pth")
-category_mapping={"1": "b"}
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_sahi_tiled_v9_scratch/model_0004884.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_sahi_tiled_v9_scratch/model_0009769.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_sahi_tiled_v9_scratch/model_0014654.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_sahi_tiled_v9_scratch/model_0019539.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_sahi_tiled_v9_scratch/model_0024424.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_sahi_tiled_v9_scratch/model_final.pth")
+
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0000199.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0000399.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0000599.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0000799.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0000999.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0001199.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0001399.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0001599.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0001799.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_0001999.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-50-03/model_final.pth")
+
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-28-53/model_0001999.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-28-53/model_final.pth")
+
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-04-50/model_final.pth")
+
+DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-21_03-09-31/model_final.pth")
+
+category_mapping={"0": "head", "1": "torso", "2": "tail", "3": "wings"}
 
 # detectron2 category mapping
 category_names = list(category_mapping.values())
-image = np.array(
-    cv2.imread(
-        '/home/mrajaraman/dataset/originals/img_1458477504.jpg', 
-        cv2.IMREAD_COLOR
-))
+image = np.array(cv2.imread('/home/mrajaraman/dataset/originals/img_1458477504.jpg', cv2.IMREAD_COLOR))
+np_image = image.copy()
 
 if isinstance(image, np.ndarray) and cfg.dataloader.train.mapper.image_format == "BGR":
         # convert RGB image to BGR format
@@ -67,86 +88,29 @@ image = image.to(device)
 model.to(device)
 model.eval()
 
+model_name="model_final"
+print("Inference done on ", model_name)
+
 with torch.no_grad():
         inputs = {"image": image, "height": height, "width": width}
 prediction_result = model([inputs])[0]
-# print(prediction_result)
+print(prediction_result)
 
-img = prediction_result['instances'][0]._fields['pred_masks'].cpu().detach().numpy()
-bbox = []
-print("Number of detected instances is ", len(prediction_result['instances']._fields['pred_boxes'].tensor))
-for i in prediction_result['instances']._fields['pred_boxes'].tensor:
-        print("i is ", i)
-        bbox.append(i.cpu().detach().numpy())
-
-# Display the image
-plt.imshow(Image.open('/home/mrajaraman/dataset/originals/img_1458477504.jpg'))
-
-# Add the patch to the Axes
-for i in range(len(bbox)):
-        # print("length is ", len(bbox))
-        plt.gca().add_patch(Rectangle((bbox[i][0], bbox[i][1]), bbox[i][2]-bbox[i][0], bbox[i][3]-bbox[i][1], linewidth=1, edgecolor='r', facecolor='none'))
-        print(f"Instance {i+1} added to image")
-
-plt.title("Inference Result of MaskRCNN on image")
-plt.savefig("trained_inference_maskrcnn.png")
-
-# image = np.ascontiguousarray(image).copy()
-# img = torch.from_numpy(image)
-# img = img.permute(2, 0, 1)  # HWC -> CHW
-
-# if torch.cuda.is_available():
-#         img = img.cuda()
-# inputs = [{"image": img}]
-
-# # run the model
-# model.to(device)
-# model.eval()
-# with torch.no_grad():
-#         predictions_ls = model(inputs)
-# prediction_result = predictions_ls[0]
-# print(prediction_result)
-# original_predictions = prediction_result
+# print(aug)
+print()
 
 # PROOF THAT RESIZING WORKS AS EXPECTED DURING INFERENCE
 print(aug)
 print()
 
-# Output sample mask predictions:
-sample_preds = prediction_result['instances'][0]._fields['pred_masks'].cpu().detach().numpy()
-print(sample_preds)
-print(sample_preds.shape)
-print(sample_preds.dtype)
+outputs = prediction_result["instances"]
+# print(type(outputs))
+# print(type(image))
 
-"""
->>> print(prediction_result['instances'][0]._fields['pred_masks'])
-tensor([[[0., 0., 0.,  ..., 0., 0., 0.],
-         [0., 0., 0.,  ..., 0., 0., 0.],
-         [0., 0., 0.,  ..., 0., 0., 0.],
-         ...,
-         [0., 0., 0.,  ..., 0., 0., 0.],
-         [0., 0., 0.,  ..., 0., 0., 0.],
-         [0., 0., 0.,  ..., 0., 0., 0.]]], device='cuda:0')
->>> print(prediction_result['instances'][0]._fields['pred_masks'].size())
-torch.Size([1, 256, 256])
-
-- Note: we can see here that the output mask predictions are a float32 array that 
-        is the same size as the sample image that we are predicting on.
->>> np.unique(sample_preds)
-array([0., 1.], dtype=float32)
-- Appears to be in RLE format -> indicating we have an RLE mask that by definition is pixel-based,
-so we can't have sub-pixel mask coordinates:
-
-The process is:
-
-Upsample by 5x and round to nearest integer using +.5 trick
-Get dense boundary points at this higher resolution
-Downsample back by dividing by scale
-Apply floor/ceil and boundary checks
-Convert to final integer coordinates
-So decimal coordinates are first scaled up for better precision during boundary calculation, but ultimately get converted to integers through this upscale-then-downscale process with rounding.
-
-This explains why super-resolution could help - it effectively increases the resolution at which this rounding occurs, allowing for more precise boundary definitions.
-
-
-"""
+v = Visualizer(np_image[:, :, ::-1], metadata=None, scale=1.0)
+out = v.draw_instance_predictions(outputs.to("cpu"))
+plt.imshow(out.get_image())
+plt.axis("off")
+plt.title("Inference Result of MaskRCNN on image")
+plt.savefig(f"inference_{model_name}.png")
+plt.show()
