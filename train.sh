@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=maskrcnn
-#SBATCH --time=12:00:00
+#SBATCH --time=18:00:00
 #SBATCH --partition=gpu-long
 #SBATCH --output=/home/mrajaraman/slurm/maskrcnn/new-train/output-%A.out
 #SBATCH --gres=gpu:1
@@ -29,10 +29,20 @@ TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 python /home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/tools/lazyconfig_train_net.py --num-gpus 1 \
 --config-file /home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/configs/new_baselines/mask_rcnn_R_50_FPN_100ep_LSJ.py \
 --exp_id ${TILE_SIZE} \
---train_iter 2000 \
+--train_iter 5000 \
 --dataset_path /home/mrajaraman/dataset/coco-roboflow/ \
 train.output_dir=output_${TILE_SIZE}_dragonfly_${TIMESTAMP} \
 train.init_checkpoint="detectron2://ImageNetPretrained/torchvision/R-50.pkl" \
 dataloader.train.dataset.names=dragonfly_512_train \
 dataloader.test.dataset.names=dragonfly_512_valid \
 # dataloader.test.dataset.names=dragonfly_512_test \
+
+python /home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/tools/lazyconfig_train_net.py --num-gpus 1 \
+--config-file /home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/configs/new_baselines/mask_rcnn_R_50_FPN_100ep_LSJ.py \
+--exp_id ${TILE_SIZE} \
+--train_iter 7500 \
+--dataset_path /home/mrajaraman/dataset/coco-roboflow/ \
+train.output_dir=output_${TILE_SIZE}_dragonfly_${TIMESTAMP} \
+train.init_checkpoint="detectron2://ImageNetPretrained/torchvision/R-50.pkl" \
+dataloader.train.dataset.names=dragonfly_512_train \
+dataloader.test.dataset.names=dragonfly_512_valid \
