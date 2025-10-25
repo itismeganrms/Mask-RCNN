@@ -92,39 +92,77 @@ print()
 
 # Output sample mask predictions:
 sample_preds = prediction_result['instances'][0]._fields['pred_masks'].cpu().detach().numpy()
+# print(sample_preds)
+# print(sample_preds.shape)
+# print(sample_preds.dtype)
+
+# """
+# >>> print(prediction_result['instances'][0]._fields['pred_masks'])
+# tensor([[[0., 0., 0.,  ..., 0., 0., 0.],
+#          [0., 0., 0.,  ..., 0., 0., 0.],
+#          [0., 0., 0.,  ..., 0., 0., 0.],
+#          ...,
+#          [0., 0., 0.,  ..., 0., 0., 0.],
+#          [0., 0., 0.,  ..., 0., 0., 0.],
+#          [0., 0., 0.,  ..., 0., 0., 0.]]], device='cuda:0')
+# >>> print(prediction_result['instances'][0]._fields['pred_masks'].size())
+# torch.Size([1, 256, 256])
+
+# - Note: we can see here that the output mask predictions are a float32 array that 
+#         is the same size as the sample image that we are predicting on.
+# >>> np.unique(sample_preds)
+# array([0., 1.], dtype=float32)
+# - Appears to be in RLE format -> indicating we have an RLE mask that by definition is pixel-based,
+# so we can't have sub-pixel mask coordinates:
+
+# The process is:
+
+# Upsample by 5x and round to nearest integer using +.5 trick
+# Get dense boundary points at this higher resolution
+# Downsample back by dividing by scale
+# Apply floor/ceil and boundary checks
+# Convert to final integer coordinates
+# So decimal coordinates are first scaled up for better precision during boundary calculation, but ultimately get converted to integers through this upscale-then-downscale process with rounding.
+
+# This explains why super-resolution could help - it effectively increases the resolution at which this rounding occurs, allowing for more precise boundary definitions.
+
+
+category_mapping={"1": "head", "2": "thorax", "3": "abdomen", "0": "wings"}
+
+# detectron2 category mapping
+category_names = list(category_mapping.values())
+image = np.array(
+    cv2.imread(
+        "/home/mrajaraman/dataset/originals/img_931176390.jpg", 
+        cv2.IMREAD_COLOR
+))
+
+# if isinstance(image, np.ndarray) and self.model.input_format == "BGR":
+#     # convert RGB image to BGR format
+#     image = image[:, :, ::-1]
+
+prediction_result = predictor(image)
+
+
+# Output sample mask predictions:
+sample_preds = prediction_result['instances'][0]._fields['pred_masks'].cpu().detach().numpy()
+# print(sample_preds)
+# print(sample_preds.shape)
+# print(sample_preds.dtype)
 print(sample_preds)
-print(sample_preds.shape)
-print(sample_preds.dtype)
+# print(sample_preds.shape)
+# print(sample_preds.dtype)
 
-"""
->>> print(prediction_result['instances'][0]._fields['pred_masks'])
-tensor([[[0., 0., 0.,  ..., 0., 0., 0.],
-         [0., 0., 0.,  ..., 0., 0., 0.],
-         [0., 0., 0.,  ..., 0., 0., 0.],
-         ...,
-         [0., 0., 0.,  ..., 0., 0., 0.],
-         [0., 0., 0.,  ..., 0., 0., 0.],
-         [0., 0., 0.,  ..., 0., 0., 0.]]], device='cuda:0')
->>> print(prediction_result['instances'][0]._fields['pred_masks'].size())
-torch.Size([1, 256, 256])
+outputs = prediction_result["instances"]
 
-- Note: we can see here that the output mask predictions are a float32 array that 
-        is the same size as the sample image that we are predicting on.
->>> np.unique(sample_preds)
-array([0., 1.], dtype=float32)
-- Appears to be in RLE format -> indicating we have an RLE mask that by definition is pixel-based,
-so we can't have sub-pixel mask coordinates:
+# print(type(outputs))
+# print(type(image))
 
-The process is:
+v = Visualizer(image[:, :, ::-1], metadata=None, scale=1.0)
+out = v.draw_instance_predictions(outputs.to("cpu"))
+plt.imshow(out.get_image())
+plt.axis("off")
+plt.show()
 
-Upsample by 5x and round to nearest integer using +.5 trick
-Get dense boundary points at this higher resolution
-Downsample back by dividing by scale
-Apply floor/ceil and boundary checks
-Convert to final integer coordinates
-So decimal coordinates are first scaled up for better precision during boundary calculation, but ultimately get converted to integers through this upscale-then-downscale process with rounding.
-
-This explains why super-resolution could help - it effectively increases the resolution at which this rounding occurs, allowing for more precise boundary definitions.
-
-
-"""
+plt.title("Inference Result of MaskDINO on image")
+plt.savefig(f"inference_maskdino.png")
