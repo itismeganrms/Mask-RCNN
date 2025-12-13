@@ -59,3 +59,12 @@ TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 # dataloader.test.dataset.names=dragonfly_512_valid 
 
 # ---- TRAINING COMMANDS FOR MERGED DATASET BELOW ----
+python /home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/tools/lazyconfig_train_net_merged.py --num-gpus 1 \
+--config-file /home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/configs/new_baselines/mask_rcnn_R_50_FPN_100ep_LSJ.py \
+--exp_id ${TILE_SIZE} \
+--train_iter 25000 \
+--dataset_path /home/mrajaraman/dataset/dataset-v2-coco/ \
+train.output_dir=output_${TILE_SIZE}_dragonfly_${TIMESTAMP} \
+train.init_checkpoint="detectron2://ImageNetPretrained/torchvision/R-50.pkl" \
+dataloader.train.dataset.names=dragonfly_merged_train \
+dataloader.test.dataset.names=dragonfly_merged_valid 
