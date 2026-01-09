@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 from detectron2.data import MetadataCatalog
 from detectron2.engine.defaults import DefaultPredictor
 from detectron2.config import get_cfg
-from detectron2.data import MetadataCatalog
 from detectron2.utils.visualizer import Visualizer
 from detectron2.projects.deeplab import add_deeplab_config
 import cv2
 from detectron2.config import LazyConfig, instantiate
 from detectron2.checkpoint import DetectionCheckpointer
+
 import detectron2.data.transforms as T
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,12 +66,35 @@ model = instantiate(cfg.model)
 
 # DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-22_01-04-50/model_final.pth")
 
-DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-21_03-09-31/model_final.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/output_512_dragonfly_2025-09-21_03-09-31/model_final.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/output_512_dragonfly_2025-12-15_00-35-53_still_glitter_192/model_final.pth")
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/output_512_dragonfly_2025-12-15_00-50-59_amber_grass_194/model_final.pth")
 
-category_mapping={"0": "head", "1": "torso", "2": "tail", "3": "wings"}
+
+# category_mapping={"0": "head", "1": "torso", "2": "tail", "3": "wings"}
+# category_mapping={"0": "wings", "1": "head", "2": "thorax", "3": "abdomen"} ## OLD INFERENCE
+# category_mapping={0: "background", 1: "head", 2": "abdomen", "3": "thorax", "4":"wings"}}
+
+## OLD INFERENCE SNIPPET
+# dataset_name="dataset_v1_coco"
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/output_512_dragonfly_2025-12-15_00-35-53_still_glitter_192/model_final.pth")
+# model_name="model_old_2500"
+
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/output_512_dragonfly_2025-09-28_13-30-18_lyric_dawn_144/model_0004999.pth")
+# model_name="model_old_5000"
+
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/output_512_dragonfly_2025-12-15_00-50-59_amber_grass_194/model_final.pth")
+# model_name="model_old_15000"
+# MetadataCatalog.get(dataset_name).thing_classes = ["dragonfly", "head", "abdomen", "thorax", "wings"]
+
+# ## NEW INFERENCE SNIPPET
+dataset_name="dataset_v2_coco"
+DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/output_512_dragonfly_2025-12-15_15-48-49_fine_fire_199/model_final.pth")
+MetadataCatalog.get(dataset_name).thing_classes = ["objects", "head", "abdomen", "thorax", "wings"]
+model_name="model_final_new_trained"
 
 # detectron2 category mapping
-category_names = list(category_mapping.values())
+# category_names = list(category_mapping.values())
 image = np.array(cv2.imread('/home/mrajaraman/dataset/originals/img_1458477504.jpg', cv2.IMREAD_COLOR))
 np_image = image.copy()
 
@@ -88,7 +111,9 @@ image = image.to(device)
 model.to(device)
 model.eval()
 
-model_name="model_final"
+
+# model_name="model_old_2500"
+
 print("Inference done on ", model_name)
 
 with torch.no_grad():
@@ -104,13 +129,20 @@ print(aug)
 print()
 
 outputs = prediction_result["instances"]
+# instances = outputs["instances"].to("cpu")
+# instances.pred_classes = instances.pred_classes.clone()
+
 # print(type(outputs))
 # print(type(image))
 
-v = Visualizer(np_image[:, :, ::-1], metadata=None, scale=1.0)
+# v = Visualizer(np_image[:, :, ::-1], metadata=None, scale=1.0)
+# out = v.draw_instance_predictions(outputs.to("cpu"))
+v = Visualizer(np_image[:, :, ::-1], metadata=MetadataCatalog.get(dataset_name), scale=1.0)
+# out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
 out = v.draw_instance_predictions(outputs.to("cpu"))
+
 plt.imshow(out.get_image())
 plt.axis("off")
-plt.title("Inference Result of MaskRCNN on image")
-plt.savefig(f"inference_{model_name}.png")
+plt.title("Inference of Trained Mask-RCNN on Image",fontsize=20)
+plt.savefig(f"/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/all_inference_images/inference_{model_name}.png")
 plt.show()
