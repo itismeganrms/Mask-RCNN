@@ -88,10 +88,10 @@ model = instantiate(cfg.model)
 # MetadataCatalog.get(dataset_name).thing_classes = ["dragonfly", "head", "abdomen", "thorax", "wings"]
 
 # ## NEW INFERENCE SNIPPET
-dataset_name="dataset_v2_coco"
-DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/output_512_dragonfly_2025-12-15_15-48-49_fine_fire_199/model_final.pth")
-MetadataCatalog.get(dataset_name).thing_classes = ["objects", "head", "abdomen", "thorax", "wings"]
-model_name="model_final_new_trained"
+# dataset_name="dataset_v2_coco"
+# DetectionCheckpointer(model).load("/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/output_512_dragonfly_2025-12-15_15-48-49_fine_fire_199/model_final.pth")
+# MetadataCatalog.get(dataset_name).thing_classes = ["objects", "head", "abdomen", "thorax", "wings"]
+# model_name="model_final_new_trained"
 
 # detectron2 category mapping
 # category_names = list(category_mapping.values())
@@ -114,7 +114,7 @@ model.eval()
 
 # model_name="model_old_2500"
 
-print("Inference done on ", model_name)
+# print("Inference done on ", model_name)
 
 with torch.no_grad():
         inputs = {"image": image, "height": height, "width": width}
@@ -141,8 +141,9 @@ v = Visualizer(np_image[:, :, ::-1], metadata=MetadataCatalog.get(dataset_name),
 # out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
 out = v.draw_instance_predictions(outputs.to("cpu"))
 
+plt.figure(figsize=(8, 8))
 plt.imshow(out.get_image())
 plt.axis("off")
-plt.title("Inference of Trained Mask-RCNN on Image",fontsize=20)
-plt.savefig(f"/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/all_inference_images/inference_{model_name}.png")
+plt.title("Inference of Trained Mask-RCNN on Image", fontsize=16)
+plt.savefig(f"/home/mrajaraman/master-thesis-dragonfly/external/mask-rcnn-dragonfly/final_runs_for_consideration/all_inference_images/inference_{model_name}.png",dpi=300, bbox_inches="tight")
 plt.show()
